@@ -224,3 +224,43 @@ GROUP BY decade, total_so, total_game, total_hr
 ORDER BY decade ASC
 
 DROP TABLE hr_so;
+
+
+/*
+ ================================================================================
+ 	QUESTION ::
+        6.Find the player who had the most success stealing bases in 2016, where success is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) 
+		Consider only players who attempted at least 20 stolen bases.
+    SOURCES ::
+        * batting
+    DIMENSIONS :: 
+        * playerid, sb, so
+    FACTS ::
+        * SUM of stolen base divided by total attempt which is SUM of stolen base + caught stealing, cast the two numbers
+		  to be numeric because bigint data type return 0 when do division ; then round to 2 decimal place and concat '%' sign
+		  to show percentage in the query result
+    FILTERS ::
+        * yearid = 2016 and total attempt >= 20
+    DESCRIPTION ::
+        ...
+    ANSWER ::
+        Chris Owings has the most successful rate of 91.30%
+*/
+
+
+WITH top1 AS (SELECT sub.playerid, 
+			  CONCAT(ROUND((sub.success::numeric * 100 / sub.attempt::numeric),2),'%') AS success_pct
+FROM
+		(SELECT playerid, SUM(sb) as success, SUM(sb + cs) as attempt
+		FROM batting
+		WHERE yearid = 2016
+		GROUP BY playerid) as sub
+WHERE sub.attempt >= 20
+ORDER BY success_pct DESC
+LIMIT 1)
+
+SELECT p.namefirst, p.namelast, top1.success_pct
+FROM top1
+LEFT JOIN people as p
+ON top1.playerid = p.playerid;
+
