@@ -358,3 +358,82 @@ WHERE yearid <> 1981
 GROUP BY team_name, worldseries
 ORDER BY total_wswin DESC
 LIMIT 1;
+
+/*
+========================================================================================================
+	QUESTION ::
+        Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 (where average attendance is defined as total attendance divided by number of games). Only consider parks where there were at least 10 games played. Report the park name, team name, and average attendance. 
+		Repeat for the lowest 5 average attendance.
+    SOURCES ::
+        * homegames, parks, teams
+    DIMENSIONS ::
+        * homegames.yearid, homegames.team, teams.teamid, park, parks.park_name, homegames.game, homegames.attendance
+    FACTS ::
+        * Average attendance per game which is the total number of attendance divided by number games.
+	FILTERS ::
+        * yearid = 2016 and total game >= 10
+    DESCRIPTION ::
+        ...
+    ANSWER ::
+        Top 5: 
+		1.	Dodger Stadium; Los Angeles Dodgers; 45719
+		2.	Busch Stadium III; St. Louis Cardinals; 42524
+		3.	Rogers Centre; Toronto Blue Jays; 41877
+		4.	AT&T Park; San Francisco Giants; 41546
+		5.	Wrigley Field;	Chicago Cubs; 39906
+		
+		Lowest 5:
+		1.	Tropicana Field;	Tampa Bay Rays;	15878
+		2.	Oakland-Alameda Country Coliseum;	Oakland Athletics;	18784
+		3.	Progressive Field;	Cleveland Indians;	19650
+		4.	Marlins Park;	Miami Marlins;	21405
+		5.	U.S. Cellular Field;	Chicago White Sox;	21559
+*/
+
+WITH top AS (SELECT year, hg.team, hg.park, p.park_name, games, hg.attendance,
+			 hg.attendance / games AS avg_attendance
+FROM homegames AS hg
+LEFT JOIN parks AS p
+ON hg.park = p.park
+WHERE year= 2016 AND games >= 10
+GROUP BY year, hg.park, hg.team, p.park_name, games, hg.attendance
+ORDER BY avg_attendance DESC
+LIMIT 5)
+ 
+
+SELECT DISTINCT p.park_name, t.name AS team_name, top.avg_attendance
+FROM top
+LEFT JOIN parks AS p
+ON top.park = p.park
+LEFT JOIN teams AS t
+ON top.team = t.teamid
+WHERE yearid = 2016 AND games >= 10
+GROUP BY p.park_name, t.name, top.avg_attendance
+ORDER BY avg_attendance DESC
+LIMIT 5;
+
+
+
+-- To find lowest 5 average attendance
+
+WITH lowest AS (
+	SELECT year, hg.team, hg.park, p.park_name, games, hg.attendance, hg.attendance / games AS avg_attendance
+	FROM homegames AS hg
+	LEFT JOIN parks AS p
+	ON hg.park = p.park
+	WHERE year= 2016 AND games >= 10
+	GROUP BY year, hg.park, hg.team, p.park_name, games, hg.attendance
+	ORDER BY avg_attendance ASC
+	LIMIT 5)
+ 
+
+SELECT DISTINCT p.park_name, t.name AS team_name, lowest.avg_attendance
+FROM lowest
+LEFT JOIN parks AS p
+ON lowest.park = p.park
+LEFT JOIN teams AS t
+ON lowest.team = t.teamid
+WHERE yearid = 2016 AND games >= 10
+GROUP BY p.park_name, t.name, lowest.avg_attendance
+ORDER BY avg_attendance ASC
+LIMIT 5;
