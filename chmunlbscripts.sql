@@ -437,3 +437,46 @@ WHERE yearid = 2016 AND games >= 10
 GROUP BY p.park_name, t.name, lowest.avg_attendance
 ORDER BY avg_attendance ASC
 LIMIT 5;
+
+/*
+================================================================================================
+   QUESTION ::
+       9. Which managers have won the TSN Manager of the Year award in both the National League (NL) and the American League (AL)? 
+		Give their full name and the teams that they were managing when they won the award.
+
+    SOURCES ::
+        * managers, people, teamsfranchises
+
+    DIMENSIONS ::
+        * yearid, awardid, franchname, namefirst, namelast, namegiven,lgid, teamid, playerid
+
+    FACTS ::
+        * ...
+
+    FILTERS ::
+        * awardid, lgid = 'NL' AND lgid = 'AL'
+
+    DESCRIPTION ::
+        ...
+
+    ANSWER ::
+        * Jim Richard Leyland - he managed Pittsburgh Pirates  & Detroit Tigers teams when he won TSN Manager award of the year
+		* Davey Allen Johnson - he managed  Baltimore Orioles and Washington Senators when he won TSN Manager ward of the year
+*/
+
+Select DISTINCT am.yearid, CONCAT(p.namefirst, ' ', substring(p.namegiven,7), ' ', p.namelast) AS fullname, 
+am.awardid, t.franchname, am.lgid
+FROM awardsmanagers as am
+JOIN managers AS m 
+ON am.playerid = m.playerid AND am.yearid = m.yearid
+JOIN people AS p 
+ON am.playerid = p.playerid
+JOIN teamsfranchises AS t 
+ON m.teamid = t.franchid
+WHERE am.playerid IN (SELECT playerid FROM awardsmanagers 
+					  WHERE awardid = 'TSN Manager of the Year' AND lgid = 'NL'
+ 					INTERSECT 
+					  SELECT playerid FROM awardsmanagers 
+					  WHERE awardid = 'TSN Manager of the Year' AND lgid = 'AL') 
+		AND awardid = 'TSN Manager of the Year'
+ORDER BY fullname, am.yearid;
