@@ -68,3 +68,49 @@ WHERE  p.playerid = a.playerid
 	AND a.teamid = t.teamid
 	AND p.playerid = 'gaedeed01'
 GROUP BY p.namefirst, p.namelast, p.height, t.name;
+
+
+/*
+===========================================================================
+    QUESTION ::
+		*3.Find all players in the database who played at Vanderbilt University.Create a list showing each player’s first and last names as well as the total salary they earned in the major leagues. Sort this list in descending order by the total salary earned. 
+				Which Vanderbilt player earned the most money in the majors?
+   	SOURCES :: 
+        * people, salaries, collegeplaying
+    DIMENSIONS :: 
+        * playerid, schoolid, salary
+    FACTS :: 
+        * player who has heighest salary & played at Vanderbilt University
+    FILTERS :: 
+        * schoolid = 'vandy'
+    DESCRIPTION ::
+        ...
+    ANSWER :: David Price earned the most money in the majors
+        ...
+*/
+SELECT cp.playerid, p.namefirst, p.namelast, SUM(s.salary) As total_salary
+FROM collegeplaying AS cp, salaries AS s, people as p
+WHERE 	cp.playerid = s.playerid
+	AND cp.playerid = p.playerid 
+	AND	schoolid = 'vandy' 
+GROUP BY cp.playerid, p.namefirst, p.namelast
+ORDER BY total_salary DESC;
+
+
+--Alternatively-----
+
+
+WITH max_salary AS(
+		SELECT s.playerid, SUM(s.salary) AS total_salary
+		FROM salaries AS s
+		JOIN collegeplaying AS cp
+		ON s.playerid = cp.playerid
+WHERE cp.schoolid = 'vandy'
+GROUP BY s.playerid)
+							
+SELECT p.namefirst, p.namelast, total_salary
+FROM people AS p
+JOIN max_salary
+ON p.playerid = max_salary.playerid
+GROUP BY p.namefirst, p.namelast, total_salary
+ORDER BY total_salary DESC;
