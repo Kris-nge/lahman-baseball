@@ -144,3 +144,83 @@ FROM fielding
 WHERE  yearid = '2016'
 GROUP BY position, yearid
 ORDER BY total_putouts;
+
+/*
+    QUESTION :: 
+        5. Find the average number of strikeouts per game by decade since 1920. 
+		Round the numbers you report to 2 decimal places. Do the same for home runs per game. Do you see any trends?
+    SOURCES :: 
+        * Not sure which table to use but used data sources from batting, pitching, teams
+    DIMENSIONS :: 
+        * yearid, so, hr
+    FACTS :: 
+        * average home run and average strike out by decade
+    FILTERS :: 
+        * yearid >= 1920
+    DESCRIPTION :: 
+        ...
+    ANSWER :: There's is a trend that both the average strike out and average homerun gradually increase from 1920 through 2016.
+        ...
+*/
+
+SELECT trunc(yearid, -1) AS decade, 
+--SUM(g) AS total_gameplayed , SUM(so)AS total_strikeouts,
+ROUND(SUM(so)::numeric / SUM(g)::numeric, 2)*100 AS avg_stikeouts,
+ROUND(SUM(hr)::numeric / SUM(g)::numeric, 2)*100 AS avg_homerun
+FROM batting
+WHERE trunc(yearid, -1) >=1920
+GROUP BY trunc(yearid, -1)
+ORDER BY trunc(yearid, -1)
+
+/*
+===========================================================
+Average strike out per game since 1920 from pitching table
+===========================================================
+*/
+
+SELECT trunc(yearid, -1) AS decade, 
+--SUM(g) AS total_gameplayed , SUM(so)AS total_strikeouts,
+ROUND(SUM(so)::numeric / SUM(g)::numeric, 2)*100 AS avg_stikeouts,
+ROUND(SUM(hr)::numeric / SUM(g)::numeric, 2)*100 AS avg_homerun
+FROM pitching
+WHERE trunc(yearid, -1) >=1920
+GROUP BY trunc(yearid, -1)
+ORDER BY trunc(yearid, -1)
+
+/*
+===================================================
+ Average home runs and strike outs from team table
+===================================================
+*/
+SELECT trunc(yearid, -1) AS decade, 
+--SUM(g) AS total_gameplayed , SUM(so)AS total_homerun, SUM(hr)AS total_homerun,
+ROUND(SUM(hr)::numeric/ SUM(g)::numeric,2)*100 AS avg_homerun,
+ROUND(SUM(so)::numeric/ SUM(g)::numeric,2)*100 AS avg_strikeout
+FROM teams
+WHERE trunc(yearid, -1) >=1920
+GROUP BY trunc(yearid, -1)
+ORDER BY trunc(yearid, -1)
+
+ 
+/*
+--===========================================================================
+Which table? Teams OR batting OR pitching OR combination of batting & pitching?
+Below query used the data from the combination of batting and pitching table that have both strike outs and home run data.
+Used temp table.
+===============================================================================
+*/
+
+SELECT * INTO hr_so
+FROM
+(SELECT trunc(p.yearid, -1) AS decade, SUM(p.g) + SUM(b.g) AS total_game, SUM(p.so) + SUM (b.so) AS total_so, SUM(p.hr)+SUM(b.hr) AS total_hr
+FROM pitching AS p, batting as b
+WHERE p.teamid = b.teamid AND trunc(p.yearid, -1) >= 1920
+GROUP BY trunc(p.yearid, -1)) AS sub;
+
+SELECT decade, ROUND(total_so::numeric /total_game::numeric, 2)*100 AS so_pergame,
+		ROUND(total_hr::numeric /total_game::numeric, 2)*100 AS hr_pergame
+FROM hr_so
+GROUP BY decade, total_so, total_game, total_hr
+ORDER BY decade ASC
+
+DROP TABLE hr_so;
