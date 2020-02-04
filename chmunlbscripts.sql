@@ -165,8 +165,8 @@ ORDER BY total_putouts;
 
 SELECT trunc(yearid, -1) AS decade, 
 --SUM(g) AS total_gameplayed , SUM(so)AS total_strikeouts,
-ROUND(SUM(so)::numeric / SUM(g)::numeric, 2)*100 AS avg_stikeouts,
-ROUND(SUM(hr)::numeric / SUM(g)::numeric, 2)*100 AS avg_homerun
+ROUND(SUM(so)::numeric / SUM(g)::numeric,*100 2) AS avg_stikeouts,
+ROUND(SUM(hr)::numeric / SUM(g)::numeric,*100 2) AS avg_homerun
 FROM batting
 WHERE trunc(yearid, -1) >=1920
 GROUP BY trunc(yearid, -1)
@@ -180,8 +180,8 @@ Average strike out per game since 1920 from pitching table
 
 SELECT trunc(yearid, -1) AS decade, 
 --SUM(g) AS total_gameplayed , SUM(so)AS total_strikeouts,
-ROUND(SUM(so)::numeric / SUM(g)::numeric, 2)*100 AS avg_stikeouts,
-ROUND(SUM(hr)::numeric / SUM(g)::numeric, 2)*100 AS avg_homerun
+ROUND(SUM(so)::numeric / SUM(g)::numeric*100, 2) AS avg_stikeouts,
+ROUND(SUM(hr)::numeric / SUM(g)::numeric*100, 2) AS avg_homerun
 FROM pitching
 WHERE trunc(yearid, -1) >=1920
 GROUP BY trunc(yearid, -1)
@@ -194,8 +194,8 @@ ORDER BY trunc(yearid, -1)
 */
 SELECT trunc(yearid, -1) AS decade, 
 --SUM(g) AS total_gameplayed , SUM(so)AS total_homerun, SUM(hr)AS total_homerun,
-ROUND(SUM(hr)::numeric/ SUM(g)::numeric,2)*100 AS avg_homerun,
-ROUND(SUM(so)::numeric/ SUM(g)::numeric,2)*100 AS avg_strikeout
+ROUND(SUM(hr)::numeric/ SUM(g)::numeric*100,2) AS avg_homerun,
+ROUND(SUM(so)::numeric/ SUM(g)::numeric*100,2) AS avg_strikeout
 FROM teams
 WHERE trunc(yearid, -1) >=1920
 GROUP BY trunc(yearid, -1)
@@ -217,8 +217,8 @@ FROM pitching AS p, batting as b
 WHERE p.teamid = b.teamid AND trunc(p.yearid, -1) >= 1920
 GROUP BY trunc(p.yearid, -1)) AS sub;
 
-SELECT decade, ROUND(total_so::numeric /total_game::numeric, 2)*100 AS so_pergame,
-		ROUND(total_hr::numeric /total_game::numeric, 2)*100 AS hr_pergame
+SELECT decade, ROUND(total_so::numeric /total_game::numeric*100, 2) AS so_pergame,
+		ROUND(total_hr::numeric /total_game::numeric*100, 2) AS hr_pergame
 FROM hr_so
 GROUP BY decade, total_so, total_game, total_hr
 ORDER BY decade ASC
