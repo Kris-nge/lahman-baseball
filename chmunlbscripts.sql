@@ -264,3 +264,97 @@ FROM top1
 LEFT JOIN people as p
 ON top1.playerid = p.playerid;
 
+
+/*
+=========================================================================================================
+    QUESTION ::
+        Q7. From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? 
+			What is the smallest number of wins for a team that did win the world series? Doing this will probably 
+			result in an unusually small number of wins for a world series champion – determine why this is the case. 
+			Then redo your query, excluding the problem year. How often from 1970 – 2016 was it the case that 
+			a team with the most wins also won the world series? What percentage of the time?
+    SOURCES ::
+        * team
+    DIMENSIONS :: 
+        * name, w, g, wswin
+    FACTS ::
+        * MAX, SUM, MIN
+    FILTERS ::
+        * yearid between 1970 - 2016, the problem year 1981, world series won or lost
+    DESCRIPTION ::
+        ...
+    ANSWER ::
+       	* Seattle Mariners had the largest win but didn't win worldseries
+		*
+*/
+--Team with the largest wins but didn't win world series: Seattle Mariners
+
+SELECT yearid, name, g AS games, MAX(w),wswin
+FROM teams
+GROUP BY yearid, teamid, name, wswin, g
+HAVING MAX (w) = (SELECT MAX(w) FROM teams WHERE yearid >= 1970 AND wswin = 'N') AND yearid >= 1970 AND wswin = 'N'
+
+
+--Alternative way of writing query but output same query result
+
+SELECT yearid, name AS team_name, g AS games, MAX(w), wswin
+FROM teams
+WHERE yearid BETWEEN 1970 AND 2016 AND wswin = 'N'
+GROUP BY yearid, name, g, wswin
+ORDER BY max DESC, yearid
+LIMIT 1;
+
+--Before removing the problem year, team with smallest wins that also win world series : Los Angeles Dodgers with 63 largest wins
+
+SELECT yearid, name, g AS games, MIN(w), wswin
+FROM teams
+GROUP BY yearid, name, g, wswin
+HAVING MIN(w) = (SELECT MIN(w) FROM teams WHERE yearid >= 1970 AND wswin = 'Y') 
+				AND yearid >= 1970 AND wswin = 'Y'
+
+-- After removing the problem year 1981 that had lesser total games played,
+-- St. Louis Cardinals had the smallest wins of 83 and also won world series
+
+SELECT yearid, teamid, name, MIN(w),wswin
+FROM teams
+GROUP BY yearid, teamid, name, wswin
+HAVING MIN(w) = (SELECT MIN(w) FROM teams WHERE yearid >= 1970 AND yearid <> 1981 AND wswin = 'Y') 
+				AND yearid >= 1970 AND yearid <> 1981 AND wswin = 'Y'
+
+--Alternatively:
+-- Los Angeles Dodgers, smallest wins 63, and won world series. In year 1981, total games played were less than the rest of the year from 1970 t0 2016
+
+SELECT yearid, name AS team_name, MIN(w) AS smallest_win, wswin AS worldseries_win, g AS games
+FROM teams
+WHERE yearid >= 1970 AND wswin = 'Y' 
+GROUP BY yearid, name, wswin, g
+ORDER BY smallest_win ASC
+Limit 1;
+
+-- After removing the problem year, St. Louis Cardinals, smallest wins 83, and also won world series
+
+SELECT yearid, name AS team_name, MIN(w) AS smallest_win, wswin AS worldseries_win, g AS games
+FROM teams
+WHERE yearid >= 1970 AND yearid <> 1981 AND wswin = 'Y' 
+GROUP BY yearid, name, wswin, g
+ORDER BY smallest_win ASC
+Limit 1;
+
+
+--Team that largest win that also won world series : New York Yankee. Percentage won was 1.01
+
+SELECT team_name, SUM(wins)AS total_wins, SUM(worldseries)::numeric AS total_wswin,
+ROUND(SUM(worldseries)::numeric*100 / SUM(wins)::numeric, 2) AS pct_win
+FROM
+	(SELECT yearid, name AS team_name, w AS wins,(SELECT MAX(w) FROM teams) AS max_win , 
+		CASE WHEN UPPER(wswin) = 'Y' THEN 1
+		 	WHEN UPPER(wswin) = 'N' THEN 0
+		END AS worldseries
+	FROM teams
+	WHERE yearid >=1970 AND yearid <> 1981 AND wswin = 'Y'
+	GROUP BY yearid,name, w, wswin
+	ORDER BY wins DESC) AS sub
+WHERE yearid <> 1981 
+GROUP BY team_name, worldseries
+ORDER BY total_wswin DESC
+LIMIT 1;
